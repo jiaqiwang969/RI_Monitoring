@@ -1,6 +1,6 @@
 %WAVELET  1D Wavelet transform with optional singificance testing
 %
-%   [WAVE,PERIOD,SCALE,COI] = wavelet(Y,DT,PAD,DJ,S0,J1,MOTHER,PARAM)
+%   [WAVE,PERIOD,SCALE,COI] = wavelet(Y,DT,PAD,DJ,MOTHER,scale,PARAM)
 %
 %   Computes the wavelet transform of the vector Y (length N),
 %   with sampling rate DT.
@@ -90,24 +90,23 @@
 %  Boulder, CO 80301, USA                 Boulder, CO 80305-3328, USA
 %  E-mail: chris[AT]rsinc[DOT]com         E-mail: compo[AT]colorado[DOT]edu
 %----------------------------------------------------------------------------
-function [wave,period,scale,coi] = ...
-	wavelet(Y,dt,pad,dj,s0,J1,mother,param);
+%modified by JIAQI-2020-09-28
+function [wave,period,coi] = ...
+	wavelet(Y,dt,pad,dj,mother,scale,param);
 
-if (nargin < 8), param = -1;, end
-if (nargin < 7), mother = -1;, end
-if (nargin < 6), J1 = -1;, end
-if (nargin < 5), s0 = -1;, end
-if (nargin < 4), dj = -1;, end
-if (nargin < 3), pad = 0;, end
-if (nargin < 2)
+if (nargin < 7), param = -1;, end
+if (nargin < 6), mother = -1;, end
+if (nargin < 5), dj = -1;, end
+if (nargin < 4), pad = 0;, end
+if (nargin < 3)
 	error('Must input a vector Y and sampling time DT')
 end
 
 n1 = length(Y);
 
-if (s0 == -1), s0=2*dt;, end
+% if (s0 == -1), s0=2*dt;, end
 if (dj == -1), dj = 1./4.;, end
-if (J1 == -1), J1=fix((log(n1*dt/s0)/log(2))/dj);, end
+% if (J1 == -1), J1=fix((log(n1*dt/s0)/log(2))/dj);, end
 if (mother == -1), mother = 'MORLET';, end
 
 %....construct time series to analyze, pad if necessary
@@ -127,13 +126,12 @@ k = [0., k, -k(fix((n-1)/2):-1:1)];
 f = fft(x);    % [Eqn(3)]
 
 %....construct SCALE array & empty PERIOD & WAVE arrays
-scale = s0*2.^((0:J1)*dj);
+% scale = s0*2.^((0:J1)*dj);
 period = scale;
-wave = zeros(J1+1,n);  % define the wavelet array
+wave = zeros(length(scale),n);  % define the wavelet array
 wave = wave + i*wave;  % make it complex
-
 % loop through all scales and compute transform
-for a1 = 1:J1+1
+for a1 = 1:length(scale)
 	[daughter,fourier_factor,coi,dofmin]=wave_bases(mother,k,scale(a1),param);	
 	wave(a1,:) = ifft(f.*daughter);  % wavelet transform[Eqn(4)]
 end

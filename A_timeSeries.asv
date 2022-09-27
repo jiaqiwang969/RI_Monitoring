@@ -46,9 +46,6 @@ end
 
 
 %% 导入数据
-    figure;
-    jet_color=colormap(jet(length(fname)));
-
 for i_file=1:length(fname)
 
     DataBase=importdata(fullfile(location,char(fname(i_file))));
@@ -73,7 +70,7 @@ for i_file=1:length(fname)
 
     %% 小波变换
     %fk 在【0-40】的阶次范围
-    fk=[1:1:40];
+    fk=[0.25:0.25:40];
     period=1./fk/(RotorSpeed/60);
     % k0=6;fourier_factor = (4*pi)/(k0 + sqrt(2 + k0^2)); % Scale-->Fourier [Sec.3h]
     fourier_factor=1.0330; %在'MORLET' this is k0 (wavenumber), default is 6.
@@ -87,10 +84,81 @@ for i_file=1:length(fname)
 
 
 
-    plot(fk,global_ws,'.-','Color',jet_color(i_file,:));
-    hold on
+    figure;
+    plot(fk,global_ws,'x-')
 
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+%% 对数据做时域信号分析
+N=resamplePoint;             % 数据长度
+fk=RotorSpeed/60*resamplePoint;
+tt=(0:N-1)/fk;               % 时间刻度
+figure
+plot(tt, Tdata_resample.surfaces(1).v(:,object(sensorLabel)),'k'); xlim([0 max(tt)]);
+xlabel('时间/s'); ylabel('幅值');
+title('调频信号波形图')
+set(gcf,'color','w');
+
+
+
+
+
+%% 傅里叶变换
+signal=Tdata_resample.surfaces(1).v(:,object(sensorLabel));
+freq=[0:length(signal)/2.56-1]*fk/length(signal);
+tmpFreq=abs(fft(signal))*2/length(signal)
+figure
+plot(freq/200,tmpFreq(1:length(signal)/2.56));
+
+
+
+%% 小波变换
+
+[y,f,coi] = cwt(DataBase(:,sensorLabel),fs,'wavetype','morlet');
+figure
+imagesc(tt,flip(f),abs(y).^2); axis xy;
+xlabel('时间/s'); ylabel('频率/Hz');
+title('cwt\_cmor谱图2'); %ylim([0 70]);
+
+
+wind=hanning(wlen);          % 窗函数
+noverlap=wlen-1;             % 重叠部分长度
+[B,freq,time]=spectrogram(DataBase(:,object(sensorLabel)),wind,noverlap,wlen,fs);
+figure
+imagesc(time,freq,abs(B)); axis xy;
+xlabel('时间/s'); ylabel('频率/Hz');
+title('STFT谱图-spectrogram'); ylim([50 350]);
+
+figure
+[wt,f]=cwt(x,'amor',fs);
+imagesc(tt,f,abs(wt).^2); axis xy;
+xlabel('时间/s'); ylabel('对数频率/Hz');
+title('cwt谱图');
+ylim([50 350]);
+
+figure
+args = {tt,f,abs(wt).^2};
+surf(args{:},'edgecolor','none');
+view(0,90);
+axis tight;
+xlabel('时间/s'); ylabel('频率/Hz');
+title('cwt谱图');
+ylim([50 350]);
+
+
+
 
 
 
