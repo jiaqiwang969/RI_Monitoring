@@ -19,7 +19,7 @@ RotorSpeed=12000;
 %     'XTickLabel',{'100%','90%','80%','70%','60%','50%','40%','30%','20%'});
 %传感器位置： 参数object包含对应斜排阵列的10个点的位置信息，即data数据的序列号；
 sensorArray={'B1';'R1';'R2';'R3';'R4';'R5';'R6';'R7';'R8';'C1'};
-sensorLabel=2;
+sensorLabel=[1:10];
 
 %% 导入subfunction
 addpath(genpath('subfunction'));
@@ -46,8 +46,8 @@ end
 
 
 %% 导入数据
-    figure;
-    jet_color=colormap(jet(length(fname)));
+% figure;
+% jet_color=colormap(jet(length(fname)));
 
 for i_file=1:length(fname)
 
@@ -78,41 +78,73 @@ for i_file=1:length(fname)
     % k0=6;fourier_factor = (4*pi)/(k0 + sqrt(2 + k0^2)); % Scale-->Fourier [Sec.3h]
     fourier_factor=1.0330; %在'MORLET' this is k0 (wavenumber), default is 6.
     scale=period/fourier_factor;
+    for k=1:length(sensorLabel)
+        [wave{k},period,coi] = wavelet(sst(:,object(sensorLabel(k))),dt,pad,dj,mother,scale);
+        power{k} = (abs(wave{k})).^2 ;        % compute wavelet power spectrum
+        fk=1./period/(RotorSpeed/60);
+        global_ws{k}=sum(power{k}.');
+        global_ws_norm{k}=global_ws{k}./max(global_ws{k});
+        %% 提取不同频带的小波能量
+        %频带1: RI频带【10-22】
+        %频带2: 1BPF 【27-31】
+        band1=[10:22];
+        band2=[27:31];
+        PI1_norm(k,i_file)=sum(global_ws_norm{k}(band1));
+        PI1(k,i_file)=sum(global_ws{k}(band1));
+        PI2(k,i_file)=sum(global_ws{k}(band2));
 
-    [wave,period,coi] = wavelet(sst(:,object(sensorLabel)),dt,pad,dj,mother,scale);
-    power = (abs(wave)).^2 ;        % compute wavelet power spectrum
-    fk=1./period/(RotorSpeed/60);
-    global_ws=sum(power.');
-    global_ws_norm=global_ws./max(global_ws);
+    end
 
 
-    plot(fk,global_ws_norm,'.-','Color',jet_color(i_file,:));
-    hold on
-
-
-%% 提取不同频带的小波能量
-%频带1: RI频带【10-22】
-%频带2: 1BPF 【27-31】
-
-band1=[10:22];
-band2=[27:31];
-PI1_norm(i_file)=sum(global_ws_norm(band1));
-PI1(i_file)=sum(global_ws(band1));
-PI2(i_file)=sum(global_ws(band2));
+    %     plot(fk,global_ws_norm,'.-','Color',jet_color(i_file,:));
+    %     hold on
 
 
 
 end
 
+jet_color=colormap(jet(10));
 
-
+%% 归一化指标：无效
 figure
-plot(1:i_file,PI1-PI1(1),'LineWidth',4);
+PI_location=(PI1_norm-PI1_norm(:,1))*(1594470000/91);
+for k=1:10
+plot(1:i_file,PI_location(k,:),'LineWidth',4,'Color',jet_color(k,:));
 hold on
-plot(1:i_file,-PI2+(PI2(1)),'LineWidth',4);
-plot(1:i_file,(PI1_norm-PI1_norm(1))*(1594470000/91),'LineWidth',4);
+end
+% hold on
+% plot(1:i_file,-PI2+(PI2(1)),'LineWidth',4);
+% plot(1:i_file,(PI1_norm-PI1_norm(1))*(1594470000/91),'LineWidth',4);
+legend('B1','R1','R2','R3','R4','R5','R6','R7','R8','C1')
 
-legend('RI频带:[10-22]','1BPF频带[27-31]','RI频带-归一化:[10-22]')
+%% 非归一化指标：有效
+figure
+PI_location=(PI1-PI1(:,1));
+for k=1:10
+plot(1:i_file,PI_location(k,:),'LineWidth',4,'Color',jet_color(k,:));
+hold on
+end
+% hold on
+% plot(1:i_file,-PI2+(PI2(1)),'LineWidth',4);
+% plot(1:i_file,(PI1_norm-PI1_norm(1))*(1594470000/91),'LineWidth',4);
+legend('B1','R1','R2','R3','R4','R5','R6','R7','R8','C1')
+
+
+
+%% 1BPF
+figure
+PI_location=-PI2+(PI2(:,1));
+for k=1:10
+plot(1:i_file,PI_location(k,:),'LineWidth',4,'Color',jet_color(k,:));
+hold on
+end
+% hold on
+% plot(1:i_file,-PI2+(PI2(1)),'LineWidth',4);
+% plot(1:i_file,(PI1_norm-PI1_norm(1))*(1594470000/91),'LineWidth',4);
+legend('B1','R1','R2','R3','R4','R5','R6','R7','R8','C1')
+
+
+
 
 
 
