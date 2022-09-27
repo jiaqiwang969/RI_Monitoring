@@ -83,14 +83,39 @@ for i_file=1:length(fname)
     power = (abs(wave)).^2 ;        % compute wavelet power spectrum
     fk=1./period/(RotorSpeed/60);
     global_ws=sum(power.');
+    global_ws_norm=global_ws./max(global_ws);
 
 
-
-
-    plot(fk,global_ws,'.-','Color',jet_color(i_file,:));
+    plot(fk,global_ws_norm,'.-','Color',jet_color(i_file,:));
     hold on
 
+
+%% 提取不同频带的小波能量
+%频带1: RI频带【10-22】
+%频带2: 1BPF 【27-31】
+
+band1=[10:22];
+band2=[27:31];
+PI1_norm(i_file)=sum(global_ws_norm(band1));
+PI1(i_file)=sum(global_ws(band1));
+PI2(i_file)=sum(global_ws(band2));
+
+
+
 end
+
+
+
+figure
+plot(1:92,PI1,'LineWidth',4);
+hold on
+plot(1:92,-PI2+43469800,'LineWidth',4);
+plot(1:92,PI1_norm*(159),'LineWidth',4);
+
+legend('RI频带:[10-22]','1BPF频带[27-31]','RI频带-归一化:[10-22]')
+
+
+
 
 
 
