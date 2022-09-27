@@ -1,0 +1,35 @@
+clear all
+%调入信号
+load noisdopp;
+s=noisdopp;
+ls=length(s);
+%信号的多步小波分解
+[C,L]=wavedec(s,5,'db4');
+%提取近似与细节系数
+cA5=appcoef(C,L,'db4',5);
+cD5=detcoef(C,L,5);
+cD4=detcoef(C,L,4);
+cD3=detcoef(C,L,3);
+cD2=detcoef(C,L,2);
+cD1=detcoef(C,L,1);
+%重构近似与细节
+A5=wrcoef('a',C,L,'db4',5);
+D5=wrcoef('d',C,L,'db4',5);
+D4=wrcoef('d',C,L,'db4',4);
+D3=wrcoef('d',C,L,'db4',3);
+D2=wrcoef('d',C,L,'db4',2);
+D1=wrcoef('d',C,L,'db4',1);
+%显示
+figure;
+subplot(3,2,1);plot(A5);title('近似A5');
+subplot(3,2,2);plot(D5);title('细节D5');
+subplot(3,2,3);plot(D4);title('细节D4');
+subplot(3,2,4);plot(D3);title('细节D3');
+subplot(3,2,5);plot(D2);title('细节D2');
+subplot(3,2,6);plot(D1);title('细节D1');
+%信号去噪
+[thr,sorh,keepapp]=ddencmp('den','wv',s);
+de_noise=wdencmp('gbl',C,L,'db4',3,thr,sorh,keepapp);
+figure
+subplot(2,1,1);plot(s);title('原信号');
+subplot(2,1,2);plot(de_noise);title('除噪后信号');
