@@ -10,7 +10,7 @@ close all
 %采样率 fk 点/圈
 resamplePoint=500;
 %转速     通过键相信号计算得到 rpm
-RotorSpeed=12000;
+RotorSpeed=13000;
 %小波阶次
 %小波幅值
 %小波能量
@@ -56,8 +56,8 @@ for i_file=1:length(fname)
 
     %% 信号预处理
     sst1=DataBase(:,1:end-1);
-    variance = std(sst1).^2;
-    sst = (sst1 - mean(sst1))./sqrt(variance);
+%     variance = std(sst1).^2;./sqrt(variance)
+    sst = sst1 ; %- mean(sst1))
     n = length(sst);
     dt = 1/fs ;
     round=[0:length(sst)-1]*dt*RotorSpeed/60;  % 圈数
@@ -103,45 +103,71 @@ for i_file=1:length(fname)
 
 end
 
-jet_color=colormap(jet(10));
+jet_color=colormap(hsv(10));
 
-%% 归一化指标：无效
-figure
-PI_location=(PI1_norm-PI1_norm(:,1))*(1594470000/91);
+%% 归一化指标
+h1=figure
+set(gcf,'OuterPosition',get(0,'screensize'));
+axes1 = axes('Parent',h1);
 for k=1:10
-plot(1:i_file,PI_location(k,:),'LineWidth',4,'Color',jet_color(k,:));
+plot(1:i_file,PI1_norm(k,:),'LineWidth',4,'Color',jet_color(k,:));
 hold on
 end
 % hold on
 % plot(1:i_file,-PI2+(PI2(1)),'LineWidth',4);
 % plot(1:i_file,(PI1_norm-PI1_norm(1))*(1594470000/91),'LineWidth',4);
 legend('B1','R1','R2','R3','R4','R5','R6','R7','R8','C1')
+title('归一化指标：无效')
+grid on
+% 创建 ylabel
+ylabel({'小波幅值谱'});
+% 创建 xlabel
+xlabel({'阀门逐渐下降'});
+% 设置其余坐标区属性
+set(axes1,'FontName','Helvetica Neue','FontSize',24);
+title(['10个传感器','-转速',num2str(RotorSpeed),'rpm(归一化)'])
+saveas(h1,[save_directory,'/','10传感器','-转速',num2str(RotorSpeed),'rpm-归一','.png'])
+saveas(h1,[save_directory,'/','10传感器','-转速',num2str(RotorSpeed),'rpm-归一','.fig'])
+
 
 %% 非归一化指标：有效
-figure
-PI_location=(PI1-PI1(:,1));
+h2=figure
+set(gcf,'OuterPosition',get(0,'screensize'));
+axes1 = axes('Parent',h2);
 for k=1:10
-plot(1:i_file,PI_location(k,:),'LineWidth',4,'Color',jet_color(k,:));
+plot(1:i_file,PI1(k,:),'LineWidth',4,'Color',jet_color(k,:));
 hold on
 end
 % hold on
 % plot(1:i_file,-PI2+(PI2(1)),'LineWidth',4);
 % plot(1:i_file,(PI1_norm-PI1_norm(1))*(1594470000/91),'LineWidth',4);
 legend('B1','R1','R2','R3','R4','R5','R6','R7','R8','C1')
+title('非归一化RI指标：有效')
+grid on
+% 创建 ylabel
+ylabel({'小波幅值谱'});
+% 创建 xlabel
+xlabel({'阀门逐渐下降'});
+% 设置其余坐标区属性
+set(axes1,'FontName','Helvetica Neue','FontSize',24);
+title(['10个传感器','-转速',num2str(RotorSpeed),'rpm(无归一)'])
+saveas(h2,[save_directory,'/','10传感器','-转速',num2str(RotorSpeed),'rpm-无归一','.png'])
+saveas(h2,[save_directory,'/','10传感器','-转速',num2str(RotorSpeed),'rpm-无归一','.fig'])
 
 
 
 %% 1BPF
-figure
-PI_location=-PI2+(PI2(:,1));
-for k=1:10
-plot(1:i_file,PI_location(k,:),'LineWidth',4,'Color',jet_color(k,:));
-hold on
-end
+% figure
+% PI_location=-PI2+(PI2(:,1));
+% for k=1:10
+% plot(1:i_file,PI_location(k,:),'LineWidth',4,'Color',jet_color(k,:));
 % hold on
-% plot(1:i_file,-PI2+(PI2(1)),'LineWidth',4);
-% plot(1:i_file,(PI1_norm-PI1_norm(1))*(1594470000/91),'LineWidth',4);
-legend('B1','R1','R2','R3','R4','R5','R6','R7','R8','C1')
+% end
+% % hold on
+% % plot(1:i_file,-PI2+(PI2(1)),'LineWidth',4);
+% % plot(1:i_file,(PI1_norm-PI1_norm(1))*(1594470000/91),'LineWidth',4);
+% legend('B1','R1','R2','R3','R4','R5','R6','R7','R8','C1')
+% title('非归一化1BPF：有效')
 
 
 

@@ -19,7 +19,7 @@ RotorSpeed=12000;
 %     'XTickLabel',{'100%','90%','80%','70%','60%','50%','40%','30%','20%'});
 %传感器位置： 参数object包含对应斜排阵列的10个点的位置信息，即data数据的序列号；
 sensorArray={'B1';'R1';'R2';'R3';'R4';'R5';'R6';'R7';'R8';'C1'};
-sensorLabel=2;
+sensorLabel=10;
 
 %% 导入subfunction
 addpath(genpath('subfunction'));
@@ -46,6 +46,12 @@ end
 
 
 %% 导入数据
+    h=figure('Visible','on');
+    set(gcf,'OuterPosition',get(0,'screensize'));
+    % 创建 axes
+    axes1 = axes('Parent',h);
+    jet_color=colormap(jet(length(fname)));
+
 for i_file=1:length(fname)
 
     DataBase=importdata(fullfile(location,char(fname(i_file))));
@@ -53,24 +59,21 @@ for i_file=1:length(fname)
 
     %% 信号预处理
     sst1=DataBase(:,1:end-1);
-    variance = std(sst1).^2;
-    sst = (sst1 - mean(sst1))./sqrt(variance);
+    sst = sst1 - mean(sst1);
     n = length(sst);
     dt = 1/fs ;
-    round=[0:length(sst)-1]*dt*RotorSpeed/60;  % 圈数
-    xlim = [0,floor(round(end))];              % 圈数的范围
     %% 小波参数
     pad = 1;                                   % 2次幂0填充
     dj = 0.125;                                % this will do 4 sub-octaves per octave
     s0 = 15*dt;                                % this says start at a scale of 6 months
-    j1 = 200;                                 % this says do 7 powers-of-two with dj sub-octaves each
+    j1 = 200;                                  % this says do 7 powers-of-two with dj sub-octaves each
     lag1 = 0.75;                               % lag-1 autocorrelation for red noise background
     mother = 'morlet';
 
 
     %% 小波变换
     %fk 在【0-40】的阶次范围
-    fk=[0.25:0.25:40];
+    fk=[1:1:40];
     period=1./fk/(RotorSpeed/60);
     % k0=6;fourier_factor = (4*pi)/(k0 + sqrt(2 + k0^2)); % Scale-->Fourier [Sec.3h]
     fourier_factor=1.0330; %在'MORLET' this is k0 (wavenumber), default is 6.
@@ -82,83 +85,27 @@ for i_file=1:length(fname)
     global_ws=sum(power.');
 
 
-
-
-    figure;
-    plot(fk,global_ws,'x-')
+    plot(fk,global_ws/max(global_ws),'.-','Color',jet_color(i_file,:));
+    hold on
 
 end
 
+xlim(axes1,[0 40]);
+% ylim(axes1,[0 3800000]);
+
+grid on
+% 创建 ylabel
+ylabel({'小波幅值谱'});
+
+% 创建 xlabel
+xlabel({'阶次 f/f_r_o_t'});
+
+% 设置其余坐标区属性
+set(axes1,'FontName','Helvetica Neue','FontSize',24);
+
+title([num2str(sensorArray{sensorLabel}),'传感器','-转速',num2str(RotorSpeed),'rpm(无归一)'])
 
 
 
-
-
-
-
-
-
-
-
-
-%% 对数据做时域信号分析
-N=resamplePoint;             % 数据长度
-fk=RotorSpeed/60*resamplePoint;
-tt=(0:N-1)/fk;               % 时间刻度
-figure
-plot(tt, Tdata_resample.surfaces(1).v(:,object(sensorLabel)),'k'); xlim([0 max(tt)]);
-xlabel('时间/s'); ylabel('幅值');
-title('调频信号波形图')
-set(gcf,'color','w');
-
-
-
-
-
-%% 傅里叶变换
-signal=Tdata_resample.surfaces(1).v(:,object(sensorLabel));
-freq=[0:length(signal)/2.56-1]*fk/length(signal);
-tmpFreq=abs(fft(signal))*2/length(signal)
-figure
-plot(freq/200,tmpFreq(1:length(signal)/2.56));
-
-
-
-%% 小波变换
-
-[y,f,coi] = cwt(DataBase(:,sensorLabel),fs,'wavetype','morlet');
-figure
-imagesc(tt,flip(f),abs(y).^2); axis xy;
-xlabel('时间/s'); ylabel('频率/Hz');
-title('cwt\_cmor谱图2'); %ylim([0 70]);
-
-
-wind=hanning(wlen);          % 窗函数
-noverlap=wlen-1;             % 重叠部分长度
-[B,freq,time]=spectrogram(DataBase(:,object(sensorLabel)),wind,noverlap,wlen,fs);
-figure
-imagesc(time,freq,abs(B)); axis xy;
-xlabel('时间/s'); ylabel('频率/Hz');
-title('STFT谱图-spectrogram'); ylim([50 350]);
-
-figure
-[wt,f]=cwt(x,'amor',fs);
-imagesc(tt,f,abs(wt).^2); axis xy;
-xlabel('时间/s'); ylabel('对数频率/Hz');
-title('cwt谱图');
-ylim([50 350]);
-
-figure
-args = {tt,f,abs(wt).^2};
-surf(args{:},'edgecolor','none');
-view(0,90);
-axis tight;
-xlabel('时间/s'); ylabel('频率/Hz');
-title('cwt谱图');
-ylim([50 350]);
-
-
-
-
-
-
+saveas(h,[save_directory,'/',num2str(sensorArray{sensorLabel}),'传感器','-转速',num2str(RotorSpeed),'rpm-归一','.png'])
+saveas(h,[save_directory,'/',num2str(sensorArray{sensorLabel}),'传感器','-转速',num2str(RotorSpeed),'rpm-归一','.fig'])

@@ -19,7 +19,7 @@ RotorSpeed=12000;
 %     'XTickLabel',{'100%','90%','80%','70%','60%','50%','40%','30%','20%'});
 %传感器位置： 参数object包含对应斜排阵列的10个点的位置信息，即data数据的序列号；
 sensorArray={'B1';'R1';'R2';'R3';'R4';'R5';'R6';'R7';'R8';'C1'};
-sensorLabel=2;
+sensorLabel=10;
 
 %% 导入subfunction
 addpath(genpath('subfunction'));
