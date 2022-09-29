@@ -57,7 +57,8 @@ for i_file=1:length(fname)
     %% 信号预处理
     sst1=DataBase(:,1:end-1);
 %     variance = std(sst1).^2;./sqrt(variance)
-    sst = sst1 ; %- mean(sst1))
+    variance = std(sst1).^2;
+    sst = (sst1 - mean(sst1))./sqrt(variance);
     n = length(sst);
     dt = 1/fs ;
     round=[0:length(sst)-1]*dt*RotorSpeed/60;  % 圈数

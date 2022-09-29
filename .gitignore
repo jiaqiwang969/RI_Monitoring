@@ -1,1 +1,22 @@
 /DATA
+/DATA_wavelet
+*.mat
+*.tex
+*.fig
+*.png
+*.eps
+*.pdf
+*.pptx
+## Core latex/pdflatex auxiliary files:
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
