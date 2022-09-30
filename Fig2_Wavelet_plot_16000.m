@@ -29,7 +29,7 @@ labelName{11}='阀门开度';
 %a. 不同位置-传感器
 sensorLabel=[1:10];
 
-for kk=1:10
+for kk=2
 h1=figure
 set(gcf,'OuterPosition',get(0,'screensize'));
 jet_color=colormap(jet(length(global_ws)+floor(xuhao_end/10)));

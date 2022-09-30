@@ -11,30 +11,36 @@ load('DATA_wavelet/16000-wavelet.mat')
 RotorSpeed=16000;
 
 %% PI基准(归一化参数)和阀门开度的基准(75%-28%)
-level=1e14;
-famen_init=75;famen_end=28;famen_SI=29; %单位：百分比
-xuhao_init=1;xuhao_end=75;xuhao_SI=74;
+level=10e14;
+famen_init=75;famen_end=28;famen_stall=29; %单位：百分比
+xuhao_init=1;xuhao_end=75;xuhao_stall=74;
 
 %计算阀门开度和序号的线性对应关系(famen=xuhao*a+b;)
 a=(famen_end-famen_init)/(xuhao_end-xuhao_init);
 b=famen_init-xuhao_init*a;
 
-label=round((round(xuhao_end/10)*[0:9]*a+b)/5)*5;
+label=floor(round(xuhao_end/10)*[0:9]*a+b);
 for k=1:10
     labelName{k}=[num2str(label(k)),'%'];
 end
 labelName{11}='阀门开度';
 
+
+
+
+
+
+
 %% 1. 小波随阀门开度变化的趋势图（不同转速、不同传感器位置）
 %a. 不同位置-传感器
 sensorLabel=[1:10];
 
-for kk=1:10
+for kk=2
 h1=figure
 set(gcf,'OuterPosition',get(0,'screensize'));
-jet_color=colormap(jet(length(global_ws)+floor(xuhao_end/10)));
+jet_color=colormap(jet(length(global_ws))+);
 axes1 = axes('Parent',h1);
-for k=1:xuhao_SI
+for k=1:xuhao_end
     waveAmplitude=global_ws{k}(:,sensorLabel);
     plot(fk,global_ws{k}(:,kk)/level,'.-','Color',jet_color(k,:));
     hold on
@@ -44,9 +50,9 @@ colorbar(axes1,'TickLabels',labelName);
 % title('非归一化RI指标：有效')
 grid on
 % 创建 ylabel
-ylabel({'小波幅值谱（-）'});
+ylabel({'小波幅值谱'});
 % 创建 xlabel
-xlabel({'阶次（f/frot）'});
+xlabel({'阶次'});
 % 设置其余坐标区属性
 set(axes1,'FontName','Helvetica Neue','FontSize',24);
 title(['转速',num2str(RotorSpeed),'rpm-',sensorArray{sensorLabel(kk)},'传感器'])

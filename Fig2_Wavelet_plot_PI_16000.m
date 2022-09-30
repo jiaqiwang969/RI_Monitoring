@@ -40,6 +40,11 @@ for k=1:length(global_ws)
     PI2(k,:)=sum(global_ws{k}(band2,:))/level;
 end
 
+
+
+
+
+
 h1=figure
 % set(gcf,'OuterPosition',get(0,'screensize'));
 axes1 = axes('Parent',h1);
@@ -50,10 +55,10 @@ plot(PI1(:,8),'LineWidth',2,'Color',[0.4940 0.1840 0.5560])
 plot(PI1(:,7),'LineWidth',2,'Color',[0.3010 0.7450 0.9330])
 plot(PI1(:,6),'LineWidth',2,'Color',[96 96 96]/255)
 plot(PI1(:,5),'LineWidth',2,'Color',[0.9290 0.6940 0.1250])
-plot(PI1(:,4),'LineWidth',2,'Color','y')
-plot(PI1(:,3),'LineWidth',2,'Color','b')
-plot(PI1(:,2),'LineWidth',2,'Color','g')
-plot(PI1(:,1),'LineWidth',2,'Color','r')
+plot(PI1(:,4),'LineWidth',2,'Color','r')
+plot(PI1(:,3),'LineWidth',2,'Color','g')
+plot(PI1(:,2),'LineWidth',2,'Color','b')
+plot(PI1(:,1),'LineWidth',2,'Color','y')
 
 
 %添加虚线

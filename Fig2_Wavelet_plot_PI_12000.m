@@ -7,25 +7,25 @@ close all
 
 
 %% 导入数据
-load('DATA_wavelet/16000-wavelet.mat')
-RotorSpeed=16000;
+load('DATA_wavelet/12000-wavelet.mat')
+RotorSpeed=12000;
 
 
 %% PI基准(归一化参数)和阀门开度的基准(75%-28%)
 level=1e14;
-famen_init=75;famen_end=28;famen_SI=29; %单位：百分比
-xuhao_init=1;xuhao_end=75;xuhao_SI=74;
+famen_init=100;famen_end=29;famen_SI=29; %单位：百分比
+xuhao_init=1;xuhao_end=92;xuhao_SI=92;
 
 %计算阀门开度和序号的线性对应关系(famen=xuhao*a+b;)
 a=(famen_end-famen_init)/(xuhao_end-xuhao_init);
 b=famen_init-xuhao_init*a;
 
-label=round((round(xuhao_end/10)*[0:9]*a+b)/5)*5;
+label=100:-5:20;
 xuhao=round((label-b)/a);
-for k=1:10
+for k=1:length(label)
     labelName{k}=[num2str(label(k))];
 end
-labelName{11}='阀门开度';
+% labelName{11}='阀门开度';
 
 
 %% 1. 小波随阀门开度变化的趋势图（不同转速、不同传感器位置）
@@ -40,6 +40,11 @@ for k=1:length(global_ws)
     PI2(k,:)=sum(global_ws{k}(band2,:))/level;
 end
 
+
+
+
+
+
 h1=figure
 % set(gcf,'OuterPosition',get(0,'screensize'));
 axes1 = axes('Parent',h1);
@@ -50,10 +55,10 @@ plot(PI1(:,8),'LineWidth',2,'Color',[0.4940 0.1840 0.5560])
 plot(PI1(:,7),'LineWidth',2,'Color',[0.3010 0.7450 0.9330])
 plot(PI1(:,6),'LineWidth',2,'Color',[96 96 96]/255)
 plot(PI1(:,5),'LineWidth',2,'Color',[0.9290 0.6940 0.1250])
-plot(PI1(:,4),'LineWidth',2,'Color','y')
-plot(PI1(:,3),'LineWidth',2,'Color','b')
-plot(PI1(:,2),'LineWidth',2,'Color','g')
-plot(PI1(:,1),'LineWidth',2,'Color','r')
+plot(PI1(:,4),'LineWidth',2,'Color','r')
+plot(PI1(:,3),'LineWidth',2,'Color','g')
+plot(PI1(:,2),'LineWidth',2,'Color','b')
+plot(PI1(:,1),'LineWidth',2,'Color','y')
 
 
 %添加虚线

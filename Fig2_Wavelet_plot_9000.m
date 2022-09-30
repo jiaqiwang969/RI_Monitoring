@@ -7,19 +7,21 @@ close all
 
 
 %% 导入数据
-load('DATA_wavelet/16000-wavelet.mat')
-RotorSpeed=16000;
+load('DATA_wavelet/9000-wavelet.mat')
+RotorSpeed=9000;
 
 %% PI基准(归一化参数)和阀门开度的基准(75%-28%)
 level=1e14;
-famen_init=75;famen_end=28;famen_SI=29; %单位：百分比
-xuhao_init=1;xuhao_end=75;xuhao_SI=74;
+famen_init=100;famen_end=29;famen_SI=29; %单位：百分比
+xuhao_init=1;xuhao_end=92;xuhao_SI=92;
 
 %计算阀门开度和序号的线性对应关系(famen=xuhao*a+b;)
 a=(famen_end-famen_init)/(xuhao_end-xuhao_init);
 b=famen_init-xuhao_init*a;
 
-label=round((round(xuhao_end/10)*[0:9]*a+b)/5)*5;
+label=75:-5:25;
+xuhao=round((label-b)/a);
+
 for k=1:10
     labelName{k}=[num2str(label(k)),'%'];
 end
@@ -29,14 +31,14 @@ labelName{11}='阀门开度';
 %a. 不同位置-传感器
 sensorLabel=[1:10];
 
-for kk=1:10
+for kk=2
 h1=figure
 set(gcf,'OuterPosition',get(0,'screensize'));
-jet_color=colormap(jet(length(global_ws)+floor(xuhao_end/10)));
+jet_color=colormap(jet(length(global_ws)-xuhao(1)+2));
 axes1 = axes('Parent',h1);
-for k=1:xuhao_SI
+for k=xuhao(1):xuhao_SI
     waveAmplitude=global_ws{k}(:,sensorLabel);
-    plot(fk,global_ws{k}(:,kk)/level,'.-','Color',jet_color(k,:));
+    plot(fk,global_ws{k}(:,kk)/level,'.-','Color',jet_color(k-xuhao(1)+1,:));
     hold on
 end
 % 创建 colorbar

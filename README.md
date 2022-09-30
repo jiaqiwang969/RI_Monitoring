@@ -7,7 +7,7 @@
 - [x] 不同频带：RI频带、1 BPF频带、联合指标
 - [x] 不同位置：证明RI频带的与之前PI有一致的效果，但归一化的PI无效
 - [x] 不同转速
-- [ ] 不同采样率
+- [x] 不同采样率
 
 ## 文档整理
 - [ ] 分析内容整理
@@ -87,14 +87,20 @@ https://blog.csdn.net/tengweitw/article/details/103555475
 
 - 选择合适的RI频带
 
+如何选择合适的频带范围？
+
 *图2-1*
+
 9000rpm（+局部放大）
+
 <img src="https://cdn.mathpix.com/snip/images/gVV1CI00OVi6KKf5EKPXCxwLKEHOJZpiNTTxGkTW0kM.original.fullsize.png" width="200px">
 
 12000rpm（+局部放大）
+
 <img src="https://cdn.mathpix.com/snip/images/8cKMqCpxAJquY0FDOn4JSImv5RjsFoOn68_Cuxnaek4.original.fullsize.png" width="200px">
 
 16000rpm（+局部放大）
+
 <img src="https://cdn.mathpix.com/snip/images/Gz57PHJFpBTjMCKW4dexoSkaC7SAzZkH96odFLs92hI.original.fullsize.png" width="200px">
 
 
@@ -102,6 +108,7 @@ https://blog.csdn.net/tengweitw/article/details/103555475
 
 
 *图2-2*
+
 画出9000rpm、12000rpm、16000rpm放在一块的PI对比图
 说明能量的变化趋势、解释16000rpm的特点（同样符合频带选择的要求）
 
