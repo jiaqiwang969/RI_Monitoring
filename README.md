@@ -11,7 +11,7 @@
 
 ## 文档整理
 - [ ] 分析内容整理
- 
+
 
 
 ## 主代码介绍：
@@ -77,13 +77,12 @@ https://blog.csdn.net/tengweitw/article/details/103555475
 
 *图1*
 画一个PI提取的流程图：
-
+<img src="https://cdn.mathpix.com/snip/images/6FR8nHTM5rxypqVrYjtsfk0-thj3NBXuBNqyELDacgg.original.fullsize.png" width="600px">
 信号--在线-->2圈作为一个截断-小波变换->提取频带特征-->统一做归一化处理得到PI
 
-<img src="https://cdn.mathpix.com/snip/images/x0gKycDq7yQL1EfIREnvmGxJNyvmqInhVEjDmJOIBnk.original.fullsize.png" width="300px">
+
 
 ### 频带的分析（不同频带的图）
-
 
 - 选择合适的RI频带
 
@@ -93,15 +92,15 @@ https://blog.csdn.net/tengweitw/article/details/103555475
 
 9000rpm（+局部放大）
 
-<img src="https://cdn.mathpix.com/snip/images/gVV1CI00OVi6KKf5EKPXCxwLKEHOJZpiNTTxGkTW0kM.original.fullsize.png" width="200px">
+<img src="https://cdn.mathpix.com/snip/images/rNmY9QRE8OSgybvyvxZOdRsRIv4uhgTooEAYVDCFtPU.original.fullsize.png" />
 
 12000rpm（+局部放大）
 
-<img src="https://cdn.mathpix.com/snip/images/8cKMqCpxAJquY0FDOn4JSImv5RjsFoOn68_Cuxnaek4.original.fullsize.png" width="200px">
+<img src="https://cdn.mathpix.com/snip/images/1Q-pTB_mLAw9nT2WNvsnaHITrXfhkDz5s73HvrVvcik.original.fullsize.png" />
 
 16000rpm（+局部放大）
 
-<img src="https://cdn.mathpix.com/snip/images/Gz57PHJFpBTjMCKW4dexoSkaC7SAzZkH96odFLs92hI.original.fullsize.png" width="200px">
+<img src="https://cdn.mathpix.com/snip/images/Kkjhlt1NuUc1KCccv3M21EulmcEYo4xmN2MB5-2Mp2M.original.fullsize.png" />
 
 
 图的布置：固定转速（3个典型转速）、不同阀门开度（3个典型阀门开度）、（主要选择R1传感器）的频带图画到一起。
@@ -151,11 +150,11 @@ https://blog.csdn.net/tengweitw/article/details/103555475
 图3–26 给出了压气机从正常运行状态(阀门全开)到失速(阀门开度28%以下)的整个过程中，采样率从600点/圈到100点/圈(以50为间隔)的11条PI曲线。可以清晰地看到，伴随着采样率的降低， PI曲线所表现的下降趋势的梯度递减，直到100点/圈时，甚至完全不足以判断压气机失稳。
 
 	根据香浓采样定理，低于两倍特征频带的采样率会导致信号混叠失真，这会直接影响PI结果的可靠性。当前所关心的RI频带范围为8-25阶次(f/f_"rot " ，参考图3-23)，这相当于采样25点/圈，所以理论上等价采样率至少要大于50点/圈。上述分析的等价采样率均满足该要求，但伴随着采样率的降低，PI表征失稳的能力会不断下降。这说明，信号所表现的非稳态随机特性，实际上无法仅通过采样定理的这一基础标准来进行衡量。从分析来看，尤其是针对等价采样率为100点/圈时，此时对应到每个叶道只有3-4个采样点（29个叶道）。这已经完全导致传感器无法捕捉到信号的峰值点，也无法反映转子的压力面和吸力面之间的压力梯度变化，造成关键的时频失稳特征严重失真，进而无法准确反映压气机的失稳过程。
-
+	
 	另一方面，我们也看到，随着采样率增加PI曲线的下降梯度增大，到500和600点/圈时，两者基本保持一致。可以发现，500点/圈已经对失稳监测具有明显的效果，已完全满足分析要求。倘若采样率进一步提高，不仅不会继续提高PI曲线针对失稳监测的灵敏度，还会增加分析计算的时间成本。
 依据上述分析结果，我们可以对采样率的选择给出如下建议：(1)采样率设置在250-350点/圈已满足失速监测的要求；(2)在条件允许的情况下，考虑继续提高采样率到500点/圈，可以进一步提高监测的灵敏度。
 
- 
+
 ## 3. 转速的影响
 
 

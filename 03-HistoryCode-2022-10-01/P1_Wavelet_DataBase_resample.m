@@ -11,9 +11,9 @@ close all
 
 %% 主要参数
 %采样率 fk 点/圈
-resamplePoint=[20 30 40 50];
+resamplePoint=[100];
 %转速     通过键相信号计算得到 rpm
-RotorSpeed=16000;
+RotorSpeed=9000;
 % RotorSpeed=6000:500:13000;
 for kk=1:length(RotorSpeed)
 %小波阶次
@@ -54,13 +54,13 @@ end
 
 %% 批量导入某个转速的mat数据
 loadMat=[];
-for k=1:75
+for k=1:92
     loadMat{k} = ['Compressor2Stall-',num2str(RotorSpeed(kk)),'-',num2str(k),'.mat'];
 end
 
 %% 导入数据
 for k=1:length(resamplePoint)
-   for  i_file=1:length(loadMat)-2
+   for  i_file=1:length(loadMat)
 
     DataBase=importdata(fullfile(location,char(loadMat(i_file))));
     DataBase=V2Pa(DataBase,kulite_transform_ab);
@@ -69,8 +69,8 @@ for k=1:length(resamplePoint)
     sst=DataBase(:,1:end-1);
 
     %% 降采样处理
-    fsResample=round(resamplePoint(k)*RotorSpeed/60/10)*10;
-    sst1=resample(DataBase(:,1:end-1),fsResample,fs);
+    sst1=resample(DataBase(:,1:end-1),resamplePoint(k)*200,fs);
+    fsResample=resamplePoint(k)*200;
     %% 
     n = length(sst1);
     dt = 1/fsResample ;
@@ -102,6 +102,58 @@ save(saveMatName)
 end
 
 
+
+
+%% PI基准(归一化参数)和阀门开度的基准(75%-28%)
+level=100;
+famen_init=100;famen_end=29;famen_SI=29; %单位：百分比
+xuhao_init=1;xuhao_end=92;xuhao_SI=92;
+
+%计算阀门开度和序号的线性对应关系(famen=xuhao*a+b;)
+a=(famen_end-famen_init)/(xuhao_end-xuhao_init);
+b=famen_init-xuhao_init*a;
+
+
+label=75:-5:25;
+xuhao=round((label-b)/a);
+for k=1:length(label)
+    labelName{k}=[num2str(label(k))];
+end
+
+%% 1. 小波随阀门开度变化的趋势图（不同转速、不同传感器位置）
+%a. 不同位置-传感器
+sensorLabel=[1:10];
+
+for kk=1:10
+h1=figure
+set(gcf,'OuterPosition',get(0,'screensize'));
+jet_color=colormap(jet(length(global_ws)+floor(xuhao_end/10)));
+axes1 = axes('Parent',h1);
+for k=1:xuhao_SI
+    waveAmplitude=global_ws{k}(:,sensorLabel);
+    plot(fk,global_ws{k}(:,kk),'.-','Color',jet_color(k,:));
+    hold on
+end
+% 创建 colorbar
+colorbar(axes1,'TickLabels',labelName);
+% title('非归一化RI指标：有效')
+grid on
+% 创建 ylabel
+ylabel({'小波幅值谱（-）'});
+% 创建 xlabel
+xlabel({'阶次（f/frot）'});
+% 设置其余坐标区属性
+set(axes1,'FontName','Helvetica Neue','FontSize',24);
+title(['转速',num2str(RotorSpeed),'rpm-',sensorArray{sensorLabel(kk)},'传感器'])
+saveas(h1,['转速',num2str(RotorSpeed),'rpm-',sensorArray{sensorLabel(kk)},'传感器','.png'])
+saveas(h1,['转速',num2str(RotorSpeed),'rpm-',sensorArray{sensorLabel(kk)},'传感器','.fig'])
+cleanfigure
+matlab2tikz(['转速',num2str(RotorSpeed),'rpm-',sensorArray{sensorLabel(kk)},'传感器','.tex'],'width','\figurewidth');
+close all
+end
+
+
+%b. PI指标
 %% 提取不同频带的小波能量
 %频带1: RI频带【10-22】
 %频带2: 1BPF 【27-31】
@@ -113,45 +165,45 @@ for i_file=1:length(global_ws)
     PI2(k,i_file,:)=sum(global_ws{k,i_file}(band2,:));
     end
 end
-
-h2=figure
-axes1 = axes('Parent',h2);
-for k=1
-plot(1:length(global_ws),PI1(:,:,2))
-hold on
-end
-legend('20','30','40','50')
-set(axes1,'FontSize',24,'XGrid','on','XTick',[20 30 40 50 60 70 80 90 100],...
-     'XTickLabel',{'100%','90%','80%','70%','60%','50%','40%','30%','20%'});
-xlim([30 92])
-grid on
-% 创建 ylabel
-ylabel({'小波幅值谱'});
-% 创建 xlabel
-xlabel({'阀门开度'});
-
-
-
-
+% 
 
 
 h1=figure
-jet_color=colormap(jet(length(resamplePoint)));
-for k=1:length(resamplePoint)
-%     subplot(19,1,k)
-    plot(global_ws{k}(:,2),'LineWidth',2,'Color',jet_color(k,:))
-    hold on
-end
-legend('20','25','30','35','40','45','50','55','60')
+% set(gcf,'OuterPosition',get(0,'screensize'));
+axes1 = axes('Parent',h1);
+plot(PI1(1,:,10),'LineWidth',2,'Color','k')
+hold on
+plot(PI1(1,:,9),'LineWidth',2,'Color',[0.6350 0.0780 0.1840])
+plot(PI1(1,:,8),'LineWidth',2,'Color',[0.4940 0.1840 0.5560])
+plot(PI1(1,:,7),'LineWidth',2,'Color',[0.3010 0.7450 0.9330])
+plot(PI1(1,:,6),'LineWidth',2,'Color',[96 96 96]/255)
+plot(PI1(1,:,5),'LineWidth',2,'Color',[0.9290 0.6940 0.1250])
+plot(PI1(1,:,4),'LineWidth',2,'Color','y')
+plot(PI1(1,:,3),'LineWidth',2,'Color','b')
+plot(PI1(1,:,2),'LineWidth',2,'Color','g')
+plot(PI1(1,:,1),'LineWidth',2,'Color','r')
 
-% legend('50','55','60','65','70','75','80','85','90','95','100','105','110','115','120','125','130','135','140','145','150','155','160','165','170','175','180')
-ylabel({'小波幅值'});
-xlabel({'阶次'});
-title(['转速',num2str(RotorSpeed),'rpm'])
-saveas(h1,['转速',num2str(RotorSpeed),'rpm-R1-','采样率对比','.png'])
-saveas(h1,['转速',num2str(RotorSpeed),'rpm-R1-','采样率对比','.fig'])
+
+%添加虚线
+line([xuhao_SI,xuhao_SI],[0,max(max(PI1))*1.2],'linestyle','--','Color','k');
+
+legend1 = legend('C1','R8','R7','R6','R5','R4','R3','R2','R1','B1','失速先兆')
+set(legend1,'NumColumns',1,'Location','northwest');
+set(axes1,'FontSize',20,'XGrid','on','XTick',xuhao,...
+    'XTickLabel',labelName);
+grid on
+% 创建 ylabel
+ylabel({'PI（-）'});
+% 创建 xlabel
+xlabel({'阀门开度（%）'});
+% 设置其余坐标区属性
+set(axes1,'FontName','Helvetica Neue','FontSize',24);
+title(['转速',num2str(RotorSpeed),'rpm-','RI频带'])
+saveas(h1,['转速',num2str(RotorSpeed),'rpm-','RI频带','.png'])
+saveas(h1,['转速',num2str(RotorSpeed),'rpm-','RI频带','.fig'])
 cleanfigure
-matlab2tikz(['转速',num2str(RotorSpeed),'rpm-R1-','采样率对比','.tex'],'width','\figurewidth');
+matlab2tikz(['转速',num2str(RotorSpeed),'rpm-','RI频带','.tex'],'width','\figurewidth');
+
 
 
 

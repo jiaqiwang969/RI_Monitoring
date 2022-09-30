@@ -11,7 +11,7 @@ close all
 
 %% 主要参数
 %采样率 fk 点/圈
-% resamplePoint=500;
+resamplePoint=500;
 %转速     通过键相信号计算得到 rpm
 RotorSpeed=14000;
 % RotorSpeed=6000:500:13000;
