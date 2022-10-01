@@ -15,14 +15,7 @@
 
 
 ## 主代码介绍：
-
-### 用于批量计算并输出小波特征
-P1_Wavelet_DataBase.m
-
-### 用于批量画图
-P2_Wavelet_plot.m
-P3_Wavelet_plot_PI.m
-
+Main.mlx
 
 
 
@@ -88,22 +81,11 @@ https://blog.csdn.net/tengweitw/article/details/103555475
 
 如何选择合适的频带范围？
 
-*图2-1*
+<img src="https://cdn.mathpix.com/snip/images/tSbnGFDIhBMvsvTcM5dGjaiKLB3u86Yo4GcrMVJTjJI.original.fullsize.png"  width="600px">
 
-9000rpm（+局部放大）
+<img src="https://cdn.mathpix.com/snip/images/cWl5OODbKVSJOvWGyVSlWUzCmdJ7YEjMQcu5Un3I4kc.original.fullsize.png"  width="600px">
 
-<img src="https://cdn.mathpix.com/snip/images/rNmY9QRE8OSgybvyvxZOdRsRIv4uhgTooEAYVDCFtPU.original.fullsize.png" />
-
-12000rpm（+局部放大）
-
-<img src="https://cdn.mathpix.com/snip/images/1Q-pTB_mLAw9nT2WNvsnaHITrXfhkDz5s73HvrVvcik.original.fullsize.png" />
-
-16000rpm（+局部放大）
-
-<img src="https://cdn.mathpix.com/snip/images/Kkjhlt1NuUc1KCccv3M21EulmcEYo4xmN2MB5-2Mp2M.original.fullsize.png" />
-
-
-图的布置：固定转速（3个典型转速）、不同阀门开度（3个典型阀门开度）、（主要选择R1传感器）的频带图画到一起。
+<img src="https://cdn.mathpix.com/snip/images/q4j1Yby_f5CDC8sXRU6Yu-dxY-AhWNyhIasSS3110KU.original.fullsize.png"  width="600px">
 
 
 *图2-2*
