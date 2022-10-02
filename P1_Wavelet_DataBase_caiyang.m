@@ -11,9 +11,9 @@ close all
 
 %% 主要参数
 %采样率 fk 点/圈
-resamplePoint=[20 30 40 50];
+resamplePoint=[30 40 50 60 70 80 90 100];
 %转速     通过键相信号计算得到 rpm
-RotorSpeed=16000;
+RotorSpeed=12000;
 % RotorSpeed=6000:500:13000;
 for kk=1:length(RotorSpeed)
 %小波阶次
@@ -105,7 +105,7 @@ end
 %% 提取不同频带的小波能量
 %频带1: RI频带【10-22】
 %频带2: 1BPF 【27-31】
-band1=[10:20];
+band1=[17:19];
 band2=[27:31];
 for i_file=1:length(global_ws)
     for k=1:size(global_ws,1)
@@ -120,7 +120,7 @@ for k=1
 plot(1:length(global_ws),PI1(:,:,2))
 hold on
 end
-legend('20','30','40','50')
+legend('30', '40', '50', '60', '70', '80', '90', '100')
 set(axes1,'FontSize',24,'XGrid','on','XTick',[20 30 40 50 60 70 80 90 100],...
      'XTickLabel',{'100%','90%','80%','70%','60%','50%','40%','30%','20%'});
 xlim([30 92])

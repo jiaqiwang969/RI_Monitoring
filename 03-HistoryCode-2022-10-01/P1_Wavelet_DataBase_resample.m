@@ -13,7 +13,7 @@ close all
 %采样率 fk 点/圈
 resamplePoint=[100];
 %转速     通过键相信号计算得到 rpm
-RotorSpeed=9000;
+RotorSpeed=12000;
 % RotorSpeed=6000:500:13000;
 for kk=1:length(RotorSpeed)
 %小波阶次
@@ -107,7 +107,7 @@ end
 %% PI基准(归一化参数)和阀门开度的基准(75%-28%)
 level=100;
 famen_init=100;famen_end=29;famen_SI=29; %单位：百分比
-xuhao_init=1;xuhao_end=92;xuhao_SI=92;
+xuhao_init=1;xuhao_end=94;xuhao_SI=92;
 
 %计算阀门开度和序号的线性对应关系(famen=xuhao*a+b;)
 a=(famen_end-famen_init)/(xuhao_end-xuhao_init);
@@ -157,7 +157,7 @@ end
 %% 提取不同频带的小波能量
 %频带1: RI频带【10-22】
 %频带2: 1BPF 【27-31】
-band1=[10:20];
+band1=[17:19];
 band2=[27:31];
 for i_file=1:length(global_ws)
     for k=1:size(global_ws,1)

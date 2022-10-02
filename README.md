@@ -55,6 +55,7 @@ https://blog.csdn.net/tengweitw/article/details/103555475
 
 - [ ] 15. 在44%存在一个台阶的问题。有可能时旋转失稳和临近失速的状态变化，最好找到一个物理解释。研究该位置的能量的变化规律，总结
 
+- [ ] 16. 再加一个不同位置PI的初始状态的局部点图
 
 
 
@@ -81,7 +82,7 @@ https://blog.csdn.net/tengweitw/article/details/103555475
 
 如何选择合适的频带范围？
 
-<img src="https://cdn.mathpix.com/snip/images/tSbnGFDIhBMvsvTcM5dGjaiKLB3u86Yo4GcrMVJTjJI.original.fullsize.png"  width="600px">
+<img src="https://cdn.mathpix.com/snip/images/O07svTi_hEgcDILXaRvkDW8MB8Pxz7vqgPdQnMve8E8.original.fullsize.png" />
 
 <img src="https://cdn.mathpix.com/snip/images/cWl5OODbKVSJOvWGyVSlWUzCmdJ7YEjMQcu5Un3I4kc.original.fullsize.png"  width="600px">
 
