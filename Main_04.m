@@ -92,11 +92,14 @@ for k=3:15
     plot(smooth(A(k,:)),'Color',jet_color2(k,:),'LineWidth',2)
     hold on
 end
+
+
 % 
 scale=1;
 plot([1:67]+14,1.4*smooth(UI_FFT(16,1:67,2)),'Color','k','LineWidth',2)
 plot([1:76]+4, 1.4*smooth(UI_FFT(17,1:76,2)),'Color','b','LineWidth',2)
 plot([1:75]+5, 1.4*smooth(UI_FFT(18,1:75,2)),'Color','y','LineWidth',2)
+
 
 legend1 = legend('7000','7500','8000','8500','9000','9500','10000','10500','11000','11500','12000','12500','13000','14000','15000','16000')
 set(legend1,'Location','northwest');

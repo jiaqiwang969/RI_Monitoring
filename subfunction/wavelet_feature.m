@@ -144,7 +144,7 @@ end
 
 period = fourier_factor*scale;
 % coi = coi*dt*[1E-5,1:((n1+1)/2-1),fliplr((1:(n1/2-1))),1E-5];  % COI [Sec.3g]
-wave = wave(:,1:n1,:)/n1;  % TODO：请一定要确认注意是否要除以n1
+wave = wave(:,1:n1,:);  % TODO：请一定要确认注意是否要除以n1
 % %小波时频图
 % power = (abs(wave)).^2/;        % compute wavelet power spectrum
 

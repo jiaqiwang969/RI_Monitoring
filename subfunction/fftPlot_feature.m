@@ -1,6 +1,6 @@
 function [the_freq,amplitude_freq]=fftPlot_dB_universal_feature(signal,fs,Scale_data,rotorspeed)
 data_fft = fs/10;
-N_overlap = data_fft/2;
+N_overlap = data_fft/2; 
 N_seg = round((length(signal)-data_fft)/(data_fft-N_overlap)) - 1;
 data_freq = zeros(data_fft,size(signal,2));
 for i = 1:N_seg
@@ -11,6 +11,7 @@ end
 data_freq = data_freq/N_seg;
 the_freq = [0:round(data_fft/Scale_data) - 1]*fs/data_fft/(rotorspeed/60);  %Êı¾İÆµÓòÀëÉ¢¿Ì¶È
 amplitude_freq=data_freq(1:round(data_fft/Scale_data),:);
+
 
 
 

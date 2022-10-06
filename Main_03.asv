@@ -13,7 +13,6 @@ else
 end
 
 %DataInfo:包含数据的位置、数据转速、数据序列、对应阀门开度、传感器位置等信息
-
 %RotorSpeed、xuhao_end;famen_init、famen_end
 DataInfo.condition(1,:) =[6000;92;29;95];
 DataInfo.condition(2,:) =[6500;94;29;95];
@@ -72,6 +71,7 @@ for k=1:18
         Process.DataBase=importdata(fullfile(DataInfo.location{k},char(Process.loadMat(i_file))));
         Process.DataBase=V2Pa(Process.DataBase,Process.sensorParameter.kulite_transform_ab);
         Process.sst1{k,i_file}=resample(Process.DataBase(:,Process.sensorParameter.object(sensorLoc)),Process.fsResample,Process.sensorParameter.fs);
+        
         [the_freq{k,i_file},amplitude_freq{k,i_file}]=fftPlot_dB_universal_feature(Process.sst1{k,i_file},Process.fsResample,2.56,DataInfo.condition(k,1));
         %计算频谱能量
         nlabel=find(the_freq{k,i_file}<RIband(2) & the_freq{k,i_file}>RIband(1));
