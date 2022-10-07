@@ -4,7 +4,6 @@ clear
 close
 addpath(genpath('subfunction'));
 %% 保存图像至指定文件夹
-
 save_directory = ['Result-',date];  %频谱图存储文件夹
 if ~exist(save_directory)
     mkdir(save_directory)
@@ -13,7 +12,6 @@ else
 end
 
 %DataInfo:包含数据的位置、数据转速、数据序列、对应磁阀开度、传感器位置等信息
-
 %RotorSpeed、xuhao_end;famen_init、famen_end
 DataInfo.condition(1,:) =[6000;92-1;29;95];
 DataInfo.condition(2,:) =[6500;94-1;29;95];
@@ -30,10 +28,9 @@ DataInfo.condition(12,:)=[11500;97-1;29;95];
 DataInfo.condition(13,:)=[12000;93-1;29;95];
 DataInfo.condition(14,:)=[12500;91-1;29;95];
 DataInfo.condition(15,:)=[13000;92-1;29;95];
-DataInfo.condition(16,:)=[12999;28;29;57];
-DataInfo.condition(17,:)=[14000;67-1;29;67];
-DataInfo.condition(18,:)=[15000;76-1;29;67];
-DataInfo.condition(19,:)=[16000;75-1;29;67];
+DataInfo.condition(16,:)=[14000;67-1;29;67];
+DataInfo.condition(17,:)=[15000;76-1;29;67];
+DataInfo.condition(18,:)=[16000;75-1;29;67];
 
 
 %目的：统一选择磁阀开度范围（横坐标固定）
@@ -61,7 +58,7 @@ the_freq=[];
 amplitude_freq=[];
 UI_FFT=[];
 Process.sst=cell(length(DataInfo.condition),max(DataInfo.condition(:,2)));
-for k=1:19
+for k=1:18
     Process.fsResample=round(resamplePoint*DataInfo.condition(k)/60/10)*10;
     Process.sensorParameter=load([DataInfo.location{k},'/','参数说明','/','parameter.mat']); %选择文件导入数据
     for  i_file=1:DataInfo.condition(k,2)
@@ -71,18 +68,21 @@ for k=1:19
         end
         Process.DataBase=importdata(fullfile(DataInfo.location{k},char(Process.loadMat(i_file))));
         Process.DataBase=V2Pa(Process.DataBase,Process.sensorParameter.kulite_transform_ab);
+        Process.sst1{k,i_file}=resample(Process.DataBase(:,Process.sensorParameter.object(sensorLoc)),Process.fsResample,Process.sensorParameter.fs);
+        [the_freq{k,i_file},amplitude_freq{k,i_file}]=fftPlot_feature(Process.sst1{k,i_file},Process.fsResample,2.56,DataInfo.condition(k,1));
+        
         %1s数据按照整圈分成4份（截断平均）
-        [Pulse,Rotor_Speed]=keyRotation_RealTime(Process.DataBase(:,end),Process.sensorParameter.fs);
-        amplitude_freq_tmp=[];
-        i_mean=40;
-        for kk=1:i_mean
-            singal=Process.DataBase(Pulse(1+floor((length(Pulse)-1)/i_mean)*(kk-1)):Pulse(floor((length(Pulse)-1)/i_mean)*kk),Process.sensorParameter.object(sensorLoc));
-            sst1_tmp=resample(singal,Process.fsResample,Process.sensorParameter.fs);
-            [the_freq_tmp,amplitude_freq_tmp(:,:,kk)]=fftPlot_feature(sst1_tmp,Process.fsResample,2.56,DataInfo.condition(k,1));
-        end
-        Process.sst1{k,i_file}=mean(sst1_tmp,3);
-        the_freq{k,i_file}=the_freq_tmp;
-        amplitude_freq{k,i_file}=mean(amplitude_freq_tmp,3);
+%         [Pulse,Rotor_Speed]=keyRotation_RealTime(Process.DataBase(:,end),Process.sensorParameter.fs);
+%         amplitude_freq_tmp=[];
+%         i_mean=4;
+%         for kk=1:i_mean
+%             singal=Process.DataBase(Pulse(1+floor((length(Pulse)-1)/i_mean)*(kk-1)):Pulse(floor((length(Pulse)-1)/i_mean)*kk),Process.sensorParameter.object(sensorLoc));
+%             sst1_tmp=resample(singal,Process.fsResample,Process.sensorParameter.fs);
+%             [the_freq_tmp,amplitude_freq_tmp(:,:,kk)]=fftPlot_feature(sst1_tmp,Process.fsResample,2.56,DataInfo.condition(k,1));
+%         end
+%         Process.sst1{k,i_file}=mean(sst1_tmp,3);
+%         the_freq{k,i_file}=the_freq_tmp;
+%         amplitude_freq{k,i_file}=mean(amplitude_freq_tmp,3);
         %计算频谱能量
         nlabel=find(the_freq{k,i_file}<RIband(2) & the_freq{k,i_file}>RIband(1));
         UI_FFT(k,i_file,:)=sum(amplitude_freq{k,i_file}(nlabel,:))*(the_freq{k,i_file}(2)-the_freq{k,i_file}(1))/length(nlabel);
@@ -91,7 +91,7 @@ end
 
 save NEW_RI_monitoring_DataBase_resample_100_RIband_10_22.mat
 
-
+% 
 % %转速的影响-Wavelet
 % resamplePoint=100;
 % RIband=[13:15];
@@ -136,7 +136,6 @@ save NEW_RI_monitoring_DataBase_resample_100_RIband_10_22.mat
 %         Wavlet.fk=1./Wavlet.period/(DataInfo.condition(k,1)/60);
 %         Wavlet.global_ws{k,i_file}=permute(sum(Wavlet.power,2),[1 3 2]);
 % 
-%         
 %         UI_WAVELET(k,i_file,:)=sum(Wavlet.global_ws{k,i_file})/length(RIband);
 %     end
 % end
@@ -380,7 +379,6 @@ end
 % saveas(h1,[save_directory,'/','FIG-转速',num2str(DataInfo.condition(i_rotorspeed,1)),'rpm','-采样率',num2str(resamplePoint),'.png'])
 % saveas(h1,[save_directory,'/','FIG-转速',num2str(DataInfo.condition(i_rotorspeed,1)),'rpm','-采样率',num2str(resamplePoint),'.fig'])
 % saveas(h1,[save_directory,'/','FIG-转速',num2str(DataInfo.condition(i_rotorspeed,1)),'rpm','-采样率',num2str(resamplePoint),'.eps'])
-
 % cleanfigure
 % matlab2tikz([save_directory,'/','FIG-转速',num2str(RotorSpeed),'rpm','-采样率',num2str(resamplePoint),'.tex']);
 

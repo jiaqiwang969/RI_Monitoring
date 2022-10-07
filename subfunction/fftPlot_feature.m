@@ -1,11 +1,11 @@
 function [the_freq,amplitude_freq]=fftPlot_dB_universal_feature(signal,fs,Scale_data,rotorspeed)
-data_fft = fs/10;
+data_fft = fs;
 N_overlap = data_fft/2; 
 N_seg = round((length(signal)-data_fft)/(data_fft-N_overlap)) - 1;
 data_freq = zeros(data_fft,size(signal,2));
 for i = 1:N_seg
     data = signal(round((i-1)*(data_fft-N_overlap)+1):round((i-1)*(data_fft-N_overlap)+data_fft),:);
-    temp_freq = (abs(fft(data))*2/data_fft).^2/length(data)^2; %为了求能量
+    temp_freq = (abs(fft(data))*2/data_fft).^2; %为了求能量
     data_freq = data_freq + temp_freq;
 end
 data_freq = data_freq/N_seg;
