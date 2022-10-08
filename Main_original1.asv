@@ -1,0 +1,469 @@
+%在原本Main_original的基础上，完善序号的匹配关系
+%1. 曲线的拟合工作
+%2.  
+% 曲线的拟合工作
+
+clc
+clear
+close all
+
+%%
+addpath(genpath('subfunction'));
+addpath(genpath('Test'));
+addpath(genpath('synchrosqueezing'));
+
+
+
+%% 保存图像至指定文件夹
+save_directory = ['Result-',date];  %频谱图存储文件夹
+if ~exist(save_directory)
+    mkdir(save_directory)
+else
+    disp('文件夹存在！');
+end
+
+%DataInfo:包含数据的位置、数据转速、数据序列、对应磁阀开度、传感器位置等信息
+%RotorSpeed、xuhao_end;famen_init、famen_end
+DataInfo.condition(1,:) =[6000;92-1;29;95];
+DataInfo.condition(2,:) =[6500;94-1;29;95];
+DataInfo.condition(3,:) =[7000;95-1;29;95];
+DataInfo.condition(4,:) =[7500;93-1;29;95];
+DataInfo.condition(5,:) =[8000;93-1;29;95];
+DataInfo.condition(6,:) =[8500;95-1;29;95];
+DataInfo.condition(7,:) =[9000;95-1;29;95];
+DataInfo.condition(8,:) =[9500;95-1;29;95];
+DataInfo.condition(9,:) =[10000;95-1;29;95];
+DataInfo.condition(10,:)=[10500;93-1;29;95];
+DataInfo.condition(11,:)=[11000;94-1;29;95];
+DataInfo.condition(12,:)=[11500;97-1;29;95];
+DataInfo.condition(13,:)=[12000;93-1;29;95];
+DataInfo.condition(14,:)=[12500;91-1;29;95];
+DataInfo.condition(15,:)=[13000;92-1;29;95];
+DataInfo.condition(16,:)=[14000;67-1;29;70];
+DataInfo.condition(17,:)=[15000;76-1;29;70];
+DataInfo.condition(18,:)=[16000;75-1;29;70];
+
+
+
+%目的：统一选择磁阀开度范围（横坐标固定）
+%计算磁阀开度和序号的线性对应关系(famen=b-xuhao*a;)
+x1=DataInfo.condition(:,4);x2=DataInfo.condition(:,3);
+y1=1;y2=DataInfo.condition(:,2);
+DataInfo_a=(y2-y1)./(x2-x1);
+DataInfo_b=y1-DataInfo_a.*x1;
+
+%% 完善工作 利用上述数据信息，构造一个与UI_FFT同等长度的矩阵18*96
+XUHAO=repmat([1:max(DataInfo.condition(:,2))],size(DataInfo.condition,1),1);
+FAMEN=(XUHAO-DataInfo_b)./DataInfo_a;
+
+%%
+
+for k=1:length(DataInfo.condition)
+    DataInfo.location{k,1}=['DATA','/','Compressor2Stall-',num2str(DataInfo.condition(k,1))];
+    DataInfo.parameterLocation{k,1}=[DataInfo.location{k,1},'/','参数说明','/','parameter.mat'];
+end
+
+DataInfo.sensorArray={'B1';'R1';'R2';'R3';'R4';'R5';'R6';'R7';'R8';'C1'};
+%10个传感器的相对弦长位置
+DataInfo.sensorLoc=[-1;5;13;23;35;47;58;71;82;101];
+
+N_caiyang=4;%每个叶道的点数
+resamplePoint=N_caiyang*29; %!!!!!!!!!!!!!!!!重要参数!!!!!!!!!!!!!!!!!!!!!
+RIband=[11:25];    %!!!!!!!!!!!!!!!!重要参数!!!!!!!!!!!!!!!!!!!!!
+sensorLoc=[1:10];
+
+%转速的影响-FFT
+the_freq=[];
+amplitude_freq=[];
+UI_FFT=[];
+Process.sst=cell(length(DataInfo.condition),max(DataInfo.condition(:,2)));
+
+
+for k=3:18
+    Process.fsResample=round(resamplePoint*DataInfo.condition(k)/60/10)*10;
+    Process.sensorParameter=load([DataInfo.location{k},'/','参数说明','/','parameter.mat']); %选择文件导入数据
+    parfor  i_file=1:DataInfo.condition(k,2)%利用好一点的计算机并行计算
+        % %         Process.loadMat=[];
+        %         for k1=1:DataInfo.condition(k,2)
+        %             Process.loadMat{k1} = ['Compressor2Stall-',num2str(DataInfo.condition(k)),'-',num2str(k1),'.mat'];
+        %         end
+        DataBase=importdata(fullfile(DataInfo.location{k},['Compressor2Stall-',num2str(DataInfo.condition(k)),'-',num2str(i_file),'.mat']));
+        DataBase=V2Pa(DataBase,Process.sensorParameter.kulite_transform_ab);
+
+        % 执行等角度采样操作:完全按照阶次谱来执行
+        % n_round_Point=(Pulse(n_round+1)-Pulse(n_round))/29;
+        % xuhao=Pulse(n_round)+(n_blade-1)*n_round_Point+(1/(2*N_caiyang)+n_caiyang/N_caiyang)*n_round_Point
+        QUAN=112; %圈数按照最小转速(7000rpm)统一固定为112，目的是为了后续统一频率分布
+        [Pulse,Rotor_Speed]=keyRotation_RealTime(DataBase(:,end),Process.sensorParameter.fs);
+        xuhao=[];
+        for n_round=1:QUAN
+            n_round_Point=(Pulse(n_round+1)-Pulse(n_round))/29;
+            for n_blade=1:29
+                for n_caiyang=1:N_caiyang
+                    xuhao=[xuhao round(Pulse(n_round)+(n_blade-1)*n_round_Point+(1/(2*N_caiyang)+n_caiyang/N_caiyang)*n_round_Point)];
+                end
+            end
+        end
+        sst1All{k,i_file}=DataBase(xuhao,Process.sensorParameter.object(sensorLoc));
+        %%利用流动失稳的循环平稳特性分离出tonal noise和broadband noise
+        %背景流
+        data_tonal_rms=permute(mean(reshape(sst1All{k,i_file},QUAN,29*N_caiyang,length(Process.sensorParameter.object(sensorLoc))),1),[2,3,1]);
+        data_tonal{k,i_file}=kron(ones(QUAN,1),data_tonal_rms);
+        data_broadband{k,i_file}=sst1All{k,i_file}-data_tonal{k,i_file};
+        %尝试减去方差！！看UI曲线的变化
+%         data_broadband{k,i_file}= data_broadband{k,i_file}./std(data_broadband{k,i_file});
+           
+        %       data_diff{k,i_file}=reshape(diff(reshape(sst1All{k,i_file},QUAN,N_caiyang*29,length(Process.sensorParameter.object(sensorLoc))),1),(QUAN-1)*N_caiyang*29,length(Process.sensorParameter.object(sensorLoc)));
+
+        %% 方法1:不平均
+        P2 = 2*abs(fft(data_broadband{k,i_file})/length(data_broadband{k,i_file}));
+        the_freq1{k,i_file}= N_caiyang*29*(0:(length(data_broadband{k,i_file})/2.56))/length(data_broadband{k,i_file});
+        amplitude_freq1{k,i_file}= P2(1:length(data_broadband{k,i_file})/2.56+1,:);
+        nlabel1=find(the_freq1{k,i_file}<RIband(end) & the_freq1{k,i_file}>RIband(1));
+        UI_FFT_noAverage1(k,i_file,:)=sum(amplitude_freq1{k,i_file}(nlabel1,:).^2)*(the_freq1{k,i_file}(2)-the_freq1{k,i_file}(1));
+
+    end
+
+    %% 方法2:stft：平均+overlap
+    %
+%         for iSensor=1:length(Process.sensorParameter.object(sensorLoc))
+%             parfor  i_file=1:DataInfo.condition(k,2)%利用好一点的计算机并行计算
+%                 %various options and parameters
+%                 CWTopt=struct('gamma',eps,'type','morlet','mu',6,'s',2,'om',0,'nv',64,'freqscale','linear');
+%                 STFTopt=struct('gamma',eps,'type','gauss','mu',1,'s',2.5,'om',0.5,'winlen',256*4,'squeezing','full');
+%                 %Short-time Fourier transform (STFT)
+%                 dt=1/(N_caiyang*29);
+%                 [Sx,fs,dSx] = stft_fw(data_broadband{k,i_file}(:,iSensor), dt, STFTopt);
+%                 the_freq2{k,i_file}= 2*[0:size(Sx,1)-1]/size(Sx,1)*29;
+%                 amplitude_freq2x{k,i_file}=mean(abs(Sx)/2,2);  %这里除以2，才使得PI结果统一？
+%     
+%                 %         figure
+%                 %         plot(the_freq1{k,i_file},amplitude_freq1{k,i_file}(:,2));
+%                 %         hold on
+%                 %         plot(the_freq2{k,i_file},amplitude_freq2{k,i_file});
+%                 %
+%                 %         % 用于验证信号
+%                 %        xNew = stft_iw(Sx, fs, STFTopt).';
+%                 %        figure;tplot(Sx, 1:length(data_broadband{k,i_file}(:,2)), fs); colorbar; title('STFT','FontSize',14); xlabel('Time (seconds)','FontSize',14); ylabel('Frequency (hz)', 'FontSize',14);
+%                 %        figure(); plot(1:length(data_broadband{k,i_file}(:,2)),[data_broadband{k,i_file}(:,2),xNew(:,1)]); title('Inverse Synchrosqueezing Signal');
+%     
+%                 % % STFT Synchrosqueezing transform
+%                 %
+%                 % [Tx, fs, Sx, Sfs, Sw, dSx] = synsq_stft_fw(1:length(data_broadband{k,i_file}(:,2)), data_broadband{k,i_file}(:,2), STFTopt);
+%                 % xNew = synsq_stft_iw(Tx, fs, STFTopt).';
+%                 % figure(); tplot(Tx, 1:length(data_broadband{k,i_file}(:,2)), fs); colorbar; title('STFT Synchrosqueezing','FontSize',14); xlabel('Time (seconds)','FontSize',14); ylabel('Frequency (hz)', 'FontSize',14);
+%                 % figure(); plot(1:length(data_broadband{k,i_file}(:,2)),[data_broadband{k,i_file}(:,2),xNew(:,1)]); title('Inverse Synchrosqueezing Signal');
+%     
+%     
+%                 %%
+%                 nlabel2=find(the_freq2{k,i_file}<RIband(end) & the_freq2{k,i_file}>RIband(1));
+%                 UI_FFT_stftAverage(k,i_file,iSensor)=sum(amplitude_freq2x{k,i_file}(nlabel2).^2)*(the_freq2{k,i_file}(2)-the_freq2{k,i_file}(1));
+%             end
+%             for i_file=1:DataInfo.condition(k,2)
+%                 amplitude_freq2{k,i_file}(:,iSensor)=amplitude_freq2x{k,i_file};
+%             end
+%         end
+
+
+
+    %% 方法3:wavelet：平均+overlap
+
+%     for iSensor=1:length(Process.sensorParameter.object(sensorLoc))
+%         parfor  i_file=1:DataInfo.condition(k,2)%利用好一点的计算机并行计算
+%             fk=[1:0.5:58];
+%             pad = 0;                                   % 2次幂0填充
+%             dj = 0.125;                                % this will do 4 sub-octaves per octave
+%             j1 = 200;                                  % this says do 7 powers-of-two with dj sub-octaves each
+%             lag1 = 0.75;                               % lag-1 autocorrelation for red noise background
+%             mother = 'morlet';
+%             fsResample=DataInfo.condition(k,1)/60*N_caiyang*29;
+%             dt = 1/fsResample ;
+%             s0 = 15*dt;
+% 
+%             period=1./fk/(DataInfo.condition(k,1)/60);
+%             % k0=6;fourier_factor = (4*pi)/(k0 + sqrt(2 + k0^2)); % Scale-->Fourier [Sec.3h]
+%             fourier_factor=1.0330; %在'MORLET' this is k0 (wavenumber), default is 6.
+%             scale=period/fourier_factor;
+%             fk=1./period/(DataInfo.condition(k,1)/60);
+% 
+%             [wave,period] = wavelet_feature(data_broadband{k,i_file},dt,pad,dj,mother,scale);
+%             the_freq3{k,i_file}= fk;
+%             amplitude_freq3{k,i_file}= permute(mean(abs(wave),2),[1,3,2]);
+%             nlabel3=find(the_freq3{k,i_file}<RIband(end) & the_freq3{k,i_file}>RIband(1));
+%             UI_FFT_waveletAverage(k,i_file,:)=sum(amplitude_freq3{k,i_file}(nlabel3,:).^2)*(the_freq3{k,i_file}(2)-the_freq3{k,i_file}(1));
+%         end
+%     end
+% 
+end
+
+% figure
+% plot(Wavlet.fk,abs(Wavlet.wave(:,1,2)))
+
+% figure;
+% plot(the_freq{k,i_file},amplitude_freq_diff{k,i_file}(:,2))
+
+
+%% 不同转速的结果对比
+h1=figure('Visible', 'on');
+% set desired output size
+set(h1, 'Units','centimeters')
+height = 18*1.3;
+width = 25*1.3;
+
+% the last two parameters of 'Position' define the figure size
+set(h1, 'Position',[25 5 width height],...
+    'PaperSize',[width height],...
+    'PaperPositionMode','auto',...
+    'InvertHardcopy', 'off',...
+    'Renderer','painters'...     %recommended if there are no alphamaps
+    );
+set(gcf, 'color', 'white');
+
+famen_range=[70 35];
+
+jet_color2=colormap(jet(18));
+A=[];
+for k=3:15
+    xuhao=find(FAMEN(k,:)<famen_range(1) & FAMEN(k,:)>famen_range(2));
+    plot(FAMEN(k,xuhao),UI_FFT_noAverage1(k,xuhao,2),'Color',jet_color2(k,:),'LineWidth',2)
+    hold on
+end
+% for k=16:18
+%     xuhao=find(FAMEN(k,:)<famen_range(1) & FAMEN(k,:)>famen_range(2));
+%     plot(FAMEN(k,xuhao),1.4^2*UI_FFT_noAverage(k,xuhao,2),'Color',jet_color2(k,:),'LineWidth',2)
+%     hold on
+% end
+set(gca, 'XDir','reverse')
+legend1 = legend('7000','7500','8000','8500','9000','9500','10000','10500','11000','11500','12000','12500','13000','14000','15000','16000')
+set(legend1,'Location','northwest');
+% set(gca,'FontSize',14,'XGrid','on','XTick',xuhao,...
+%     'XTickLabel',mat2cell(famen.',ones(length(famen),1)));
+grid on
+    txt = {...
+        ['采样',num2str(N_caiyang*29),'点/圈'],['位置',DataInfo.sensorArray{2}]};
+    annotation('textbox',...
+        [0.3 0.77 0.17 0.13],...
+        'String',txt,...
+        'FontSize',13,...
+        'FontName','Arial',...
+        'LineStyle','--',...
+        'EdgeColor',[1 1 0],...
+        'LineWidth',2,...
+        'BackgroundColor',[0.9  0.9 0.9],...
+        'Color',[0.84 0.16 0]);
+    set(gca,'FontSize',20);
+% 创建 ylabel
+% ylabel({'PI（）'});
+ylabel('$I_{RI}=\sum_{i}P(i)\Delta f[pa^2]$','interpreter','latex','FontSize',20)
+% 创建 xlabel
+xlabel('磁阀开度(%)','FontSize',30);
+% 设置其余坐标区属性
+title('不同转速的I_R_I','FontSize',14)
+set(gca,'FontSize',14);
+saveas(h1,[save_directory,'/','FIG-所有转速-无平均-方差','-采样率',num2str(resamplePoint),'-RIband-',num2str(RIband(1)),'-',num2str(RIband(end))],'pdf')
+
+
+%% 数据
+%从100到70，再从70到30的阀门开度，100-70取0操作
+%首先，按照董老师的思路，对每条曲线先进行拟合,目的是为了重新插值取点
+% clc
+% clear
+% close all
+%  
+% load loadData.mat
+% figure
+% famen_range=[70 50]
+% jet_color2=colormap(jet(18));
+% p=[];
+% for k=3:15
+%         xuhao=find(FAMEN(k,:)<famen_range(1) & FAMEN(k,:)>famen_range(2));
+%  hold on
+%     p(k,:)=polyfit(FAMEN(k,xuhao),log10(UI_FFT_noAverage1(k,xuhao,2)),1);
+% 
+%  plot(FAMEN(k,xuhao),10.^polyval(p(k,:),FAMEN(k,xuhao)),'Color',jet_color2(k,:));
+%   plot(FAMEN(k,xuhao),10.^log10(UI_FFT_noAverage1(k,xuhao,2)),'.','Color',jet_color2(k,:));
+% 
+% 
+% end
+% set(gca, 'XDir','reverse')
+% legend('7000','7500','8000','8500','9000','9500','10000','10500','11000','11500','12000','12500','13000','14000','15000','16000')
+% 
+% % 
+% figure
+% famen_range=[80 40]
+% jet_color2=colormap(jet(18));
+% p=[];
+% for k=3:15
+%         xuhao=find(FAMEN(k,:)<famen_range(1) & FAMEN(k,:)>famen_range(2));
+%  hold on
+%     p(k,:)=polyfit(FAMEN(k,xuhao),(UI_FFT_noAverage1(k,xuhao,2)),1);
+% 
+%  plot(FAMEN(k,xuhao),polyval(p(k,:),FAMEN(k,xuhao)),'Color',jet_color2(k,:));
+%   plot(FAMEN(k,xuhao),(UI_FFT_noAverage1(k,xuhao,2)),'.','Color',jet_color2(k,:));
+% 
+% 
+% end
+% set(gca, 'XDir','reverse')
+% legend('7000','7500','8000','8500','9000','9500','10000','10500','11000','11500','12000','12500','13000','14000','15000','16000')
+% 
+
+famen_range_fit=[70 35];
+famen_range_large=[80 30];
+
+xuhao_7000_large=find(FAMEN(3,:)<famen_range_large(1) & FAMEN(3,:)>famen_range_large(2));
+xuhao_7000_fit=find(FAMEN(3,:)<famen_range_fit(1) & FAMEN(3,:)>famen_range_fit(2));
+
+p_7000 = polyfit(FAMEN(3,xuhao_7000_large),UI_FFT_noAverage1(3,xuhao_7000_large,2),5);
+max_7000_35=polyval(p_7000,35);
+initial_7000_70=polyval(p(3,:),70);
+Iri_7000_35=(max_7000_35-initial_7000_70);
+
+
+%%
+for k=3:15
+xuhao=find(FAMEN(k,:)<famen_range_large(1) & FAMEN(k,:)>famen_range_large(2));
+p(k,:) = polyfit(FAMEN(k,xuhao_7500_large),UI_FFT_noAverage1k,xuhao,2),5);
+end
+
+%拟合初始值
+initial=[];
+for k=3:15
+    initial=[initial polyval(p(k,:),70)];
+end
+
+rs=polyfit([7000:500:13000],initial)
+
+
+figure
+plot(linspace(0,1,10),sqrt(linspace(0,1,10)))
+
+%%
+xuhao_13000_fit=find(FAMEN(15,:)<famen_range_fit(1) & FAMEN(15,:)>famen_range_fit(2));
+xuhao_13000_large=find(FAMEN(15,:)<famen_range_large(1) & FAMEN(15,:)>famen_range_large(2));
+
+p_13000 = polyfit(FAMEN(15,xuhao_13000_large),UI_FFT_noAverage1(15,xuhao_13000_large,2),5);
+max_13000_35=polyval(p_13000,35);
+initial_13000_70=polyval(p_13000,70);
+Iri_13000_35=1;
+
+
+%% 验证13000rpm的曲线
+figure
+plot(FAMEN(15,xuhao_13000_fit),polyval(p_13000,FAMEN(15,xuhao_13000_fit))/max_13000_35);
+set(gca, 'XDir','reverse')
+hold on
+
+%%
+
+
+
+%% 验证7000rpm的曲线
+
+plot(FAMEN(15,xuhao_7000_fit),polyval(p_7000,FAMEN(15,xuhao_7000_fit))/max_13000_35)
+set(gca, 'XDir','reverse')
+
+
+
+
+
+
+Iri_13000_alpha=@(alpha)  (polyval(p_13000,alpha)-initial_13000_70)/max_13000_35;
+Iri_7000_alpha=@(alpha)  (polyval(p_7000,alpha)-initial_7000_70)/max_13000_35;
+
+
+
+Isegm_alpha=@(alpha) (Iri_13000_alpha(alpha)-Iri_7000_alpha(alpha))/12;
+Isegm_rate=@(alpha) (Iri_13000_alpha(alpha)./Iri_7000_alpha(alpha));
+
+
+%若已知两条曲线的所有值
+Iri_1 = @(RS, alpha) Iri_13000_alpha(alpha)-Isegm_alpha(alpha).*(13000-RS)/500;%.*((1-(alpha-famen_range_fit(2))./(famen_range_fit(1)-famen_range_fit(2)))).^(2);
+Iri_1_real = @(RS, alpha) Iri_1*max_13000_35
+%若仅知道13000rpm曲线的所有值，以及7000的一个点
+Iri_2 = @(RS, alpha) Iri_13000_alpha(alpha)-Isegm_alpha(35).*(13000-RS)/500.*((1-(alpha-famen_range_fit(2))./(famen_range_fit(1)-famen_range_fit(2))).^(1.2));
+
+
+figure
+plot(linspace(0,1,40),linspace(0,1,40).^(1/2))
+
+
+%变化规律并非线性
+figure
+plot([70:-1:35],Isegm_rate([70:-1:35]))
+set(gca, 'XDir','reverse')
+%https://cdn.mathpix.com/snip/images/J8nsUEaecZA59onYyQbgkxOmxis5DArczc026apaAR4.original.fullsize.png
+
+figure
+plot([70:-1:35],Iri_13000_alpha([70:-1:35]))
+hold on
+plot([70:-1:35],Iri_7000_alpha([70:-1:35]))
+set(gca, 'XDir','reverse')
+
+alpha1=70:-1:35;
+for k=3:15
+    RS1=DataInfo.condition(k,1);
+    plot(alpha1,Iri_1(RS1,alpha1))
+    hold on
+end
+set(gca, 'XDir','reverse')
+
+
+
+
+figure
+alpha1=70:-1:35;
+for k=3:15
+    RS1=DataInfo.condition(k,1);
+    plot(alpha1,Iri(RS1,alpha1))
+    hold on
+end
+set(gca, 'XDir','reverse')
+
+
+
+
+
+% p=[];
+% figure
+% jet_color2=colormap(jet(18));
+% 
+% famen_range=[70 30];
+% famen_init=[37 35];
+% 
+% for k=3:15
+% %     p(k,:) = polyfit(FAMEN(k,xuhao),UI_FFT_noAverage1(k,xuhao,2),5);
+%     xuhao=find(FAMEN(k,:)<famen_range(1) & FAMEN(k,:)>famen_range(2));
+%     xuhao_initial=find(FAMEN(k,:)<famen_init(1) & FAMEN(k,:)>famen_init(2));
+% 
+%     plot(FAMEN(k,xuhao),UI_FFT_noAverage(k,xuhao,2),'-','Color',jet_color2(k,:))
+%     hold on
+% end
+% set(gca, 'XDir','reverse')
+
+
+% /mean(UI_FFT_noAverage(k,xuhao_initial,2))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
