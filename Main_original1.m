@@ -52,7 +52,7 @@ y1=1;y2=DataInfo.condition(:,2);
 DataInfo_a=(y2-y1)./(x2-x1);
 DataInfo_b=y1-DataInfo_a.*x1;
 
-%% 完善工作 利用上述数据信息，构造一个与UI_FFT同等长度的矩阵18*96
+% 完善工作 利用上述数据信息，构造一个与UI_FFT同等长度的矩阵18*96
 XUHAO=repmat([1:max(DataInfo.condition(:,2))],size(DataInfo.condition,1),1);
 FAMEN=(XUHAO-DataInfo_b)./DataInfo_a;
 
@@ -69,7 +69,7 @@ DataInfo.sensorLoc=[-1;5;13;23;35;47;58;71;82;101];
 
 N_caiyang=4;%每个叶道的点数
 resamplePoint=N_caiyang*29; %!!!!!!!!!!!!!!!!重要参数!!!!!!!!!!!!!!!!!!!!!
-RIband=[11:25];    %!!!!!!!!!!!!!!!!重要参数!!!!!!!!!!!!!!!!!!!!!
+RIband=[8:24];    %!!!!!!!!!!!!!!!!重要参数!!!!!!!!!!!!!!!!!!!!!
 sensorLoc=[1:10];
 
 %转速的影响-FFT
@@ -219,13 +219,13 @@ set(h1, 'Position',[25 5 width height],...
     );
 set(gcf, 'color', 'white');
 
-famen_range=[70 35];
+famen_range=[70 30];
 
 jet_color2=colormap(jet(18));
 A=[];
 for k=3:15
     xuhao=find(FAMEN(k,:)<famen_range(1) & FAMEN(k,:)>famen_range(2));
-    plot(FAMEN(k,xuhao),UI_FFT_noAverage1(k,xuhao,2),'Color',jet_color2(k,:),'LineWidth',2)
+    plot(FAMEN(k,xuhao),UI_FFT_noAverage(k,xuhao,2),'Color',jet_color2(k,:),'LineWidth',2)
     hold on
 end
 % for k=16:18
@@ -261,216 +261,5 @@ xlabel('磁阀开度(%)','FontSize',30);
 title('不同转速的I_R_I','FontSize',14)
 set(gca,'FontSize',14);
 saveas(h1,[save_directory,'/','FIG-所有转速-无平均-方差','-采样率',num2str(resamplePoint),'-RIband-',num2str(RIband(1)),'-',num2str(RIband(end))],'pdf')
-
-
-%% 数据
-%从100到70，再从70到30的阀门开度，100-70取0操作
-%首先，按照董老师的思路，对每条曲线先进行拟合,目的是为了重新插值取点
-% clc
-% clear
-% close all
-%  
-% load loadData.mat
-% figure
-% famen_range=[70 50]
-% jet_color2=colormap(jet(18));
-% p=[];
-% for k=3:15
-%         xuhao=find(FAMEN(k,:)<famen_range(1) & FAMEN(k,:)>famen_range(2));
-%  hold on
-%     p(k,:)=polyfit(FAMEN(k,xuhao),log10(UI_FFT_noAverage1(k,xuhao,2)),1);
-% 
-%  plot(FAMEN(k,xuhao),10.^polyval(p(k,:),FAMEN(k,xuhao)),'Color',jet_color2(k,:));
-%   plot(FAMEN(k,xuhao),10.^log10(UI_FFT_noAverage1(k,xuhao,2)),'.','Color',jet_color2(k,:));
-% 
-% 
-% end
-% set(gca, 'XDir','reverse')
-% legend('7000','7500','8000','8500','9000','9500','10000','10500','11000','11500','12000','12500','13000','14000','15000','16000')
-% 
-% % 
-% figure
-% famen_range=[80 40]
-% jet_color2=colormap(jet(18));
-% p=[];
-% for k=3:15
-%         xuhao=find(FAMEN(k,:)<famen_range(1) & FAMEN(k,:)>famen_range(2));
-%  hold on
-%     p(k,:)=polyfit(FAMEN(k,xuhao),(UI_FFT_noAverage1(k,xuhao,2)),1);
-% 
-%  plot(FAMEN(k,xuhao),polyval(p(k,:),FAMEN(k,xuhao)),'Color',jet_color2(k,:));
-%   plot(FAMEN(k,xuhao),(UI_FFT_noAverage1(k,xuhao,2)),'.','Color',jet_color2(k,:));
-% 
-% 
-% end
-% set(gca, 'XDir','reverse')
-% legend('7000','7500','8000','8500','9000','9500','10000','10500','11000','11500','12000','12500','13000','14000','15000','16000')
-% 
-
-famen_range_fit=[70 35];
-famen_range_large=[80 30];
-
-xuhao_7000_large=find(FAMEN(3,:)<famen_range_large(1) & FAMEN(3,:)>famen_range_large(2));
-xuhao_7000_fit=find(FAMEN(3,:)<famen_range_fit(1) & FAMEN(3,:)>famen_range_fit(2));
-
-p_7000 = polyfit(FAMEN(3,xuhao_7000_large),UI_FFT_noAverage1(3,xuhao_7000_large,2),5);
-max_7000_35=polyval(p_7000,35);
-initial_7000_70=polyval(p(3,:),70);
-Iri_7000_35=(max_7000_35-initial_7000_70);
-
-
-%%
-for k=3:15
-xuhao=find(FAMEN(k,:)<famen_range_large(1) & FAMEN(k,:)>famen_range_large(2));
-p(k,:) = polyfit(FAMEN(k,xuhao_7500_large),UI_FFT_noAverage1k,xuhao,2),5);
-end
-
-%拟合初始值
-initial=[];
-for k=3:15
-    initial=[initial polyval(p(k,:),70)];
-end
-
-
-figure
-plot([7000:500:13000],initial)
-hold on
-rs=polyfit([7000:500:13000],initial,8)
-plot([7000:500:13000],polyval(rs,[7000:500:13000]))
-
-figure
-plot(linspace(0,1,10),sqrt(linspace(0,1,10)))
-
-%%
-xuhao_13000_fit=find(FAMEN(15,:)<famen_range_fit(1) & FAMEN(15,:)>famen_range_fit(2));
-xuhao_13000_large=find(FAMEN(15,:)<famen_range_large(1) & FAMEN(15,:)>famen_range_large(2));
-
-p_13000 = polyfit(FAMEN(15,xuhao_13000_large),UI_FFT_noAverage1(15,xuhao_13000_large,2),5);
-max_13000_35=polyval(p_13000,35);
-initial_13000_70=polyval(p_13000,70);
-Iri_13000_35=1;
-
-
-%% 验证13000rpm的曲线
-figure
-plot(FAMEN(15,xuhao_13000_fit),polyval(p_13000,FAMEN(15,xuhao_13000_fit))/max_13000_35);
-set(gca, 'XDir','reverse')
-hold on
-
-%%
-
-
-
-%% 验证7000rpm的曲线
-
-plot(FAMEN(15,xuhao_7000_fit),polyval(p_7000,FAMEN(15,xuhao_7000_fit))/max_13000_35)
-set(gca, 'XDir','reverse')
-
-
-
-
-
-
-Iri_13000_alpha=@(alpha)  (polyval(p_13000,alpha)-initial_13000_70)/max_13000_35;
-Iri_7000_alpha=@(alpha)  (polyval(p_7000,alpha)-initial_7000_70)/max_13000_35;
-
-
-
-Isegm_alpha=@(alpha) (Iri_13000_alpha(alpha)-Iri_7000_alpha(alpha))/12;
-Isegm_rate=@(alpha) (Iri_13000_alpha(alpha)./Iri_7000_alpha(alpha));
-
-
-%若已知两条曲线的所有值
-Iri_1 = @(RS, alpha) Iri_13000_alpha(alpha)-Isegm_alpha(alpha).*(13000-RS)/500;%.*((1-(alpha-famen_range_fit(2))./(famen_range_fit(1)-famen_range_fit(2)))).^(2);
-Iri_1_real = @(RS, alpha) Iri_1(RS, alpha).*max_13000_35+polyval(rs,RS);
-%若仅知道13000rpm曲线的所有值，以及7000的一个点
-Iri_2 = @(RS, alpha) Iri_13000_alpha(alpha)-Isegm_alpha(35).*(13000-RS)/500.*((1-(alpha-famen_range_fit(2))./(famen_range_fit(1)-famen_range_fit(2))).^(1.2));
-
-
-figure
-plot(linspace(0,1,40),linspace(0,1,40).^(1/2))
-
-
-%变化规律并非线性
-figure
-plot([70:-1:35],Isegm_rate([70:-1:35]))
-set(gca, 'XDir','reverse')
-%https://cdn.mathpix.com/snip/images/J8nsUEaecZA59onYyQbgkxOmxis5DArczc026apaAR4.original.fullsize.png
-
-figure
-for k=3:15
-        xuhao=find(FAMEN(k,:)<famen_range_fit(1) & FAMEN(k,:)>famen_range_fit(2));
-plot(FAMEN(k,xuhao),(UI_FFT_noAverage1(k,xuhao,2)))
-hold on
-end
-% plot([70:-1:35],Iri_7000_alpha([70:-1:35]))
-% set(gca, 'XDir','reverse')
-
-alpha1=70:-1:35;
-for k=3:15
-    RS1=DataInfo.condition(k,1);
-    plot(alpha1,Iri_1_real(RS1,alpha1))
-    hold on
-end
-set(gca, 'XDir','reverse')
-
-
-
-
-figure
-alpha1=70:-1:35;
-for k=3:15
-    RS1=DataInfo.condition(k,1);
-    plot(alpha1,Iri(RS1,alpha1))
-    hold on
-end
-set(gca, 'XDir','reverse')
-
-
-
-
-
-% p=[];
-% figure
-% jet_color2=colormap(jet(18));
-% 
-% famen_range=[70 30];
-% famen_init=[37 35];
-% 
-% for k=3:15
-% %     p(k,:) = polyfit(FAMEN(k,xuhao),UI_FFT_noAverage1(k,xuhao,2),5);
-%     xuhao=find(FAMEN(k,:)<famen_range(1) & FAMEN(k,:)>famen_range(2));
-%     xuhao_initial=find(FAMEN(k,:)<famen_init(1) & FAMEN(k,:)>famen_init(2));
-% 
-%     plot(FAMEN(k,xuhao),UI_FFT_noAverage(k,xuhao,2),'-','Color',jet_color2(k,:))
-%     hold on
-% end
-% set(gca, 'XDir','reverse')
-
-
-% /mean(UI_FFT_noAverage(k,xuhao_initial,2))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

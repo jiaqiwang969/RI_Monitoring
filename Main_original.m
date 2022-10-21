@@ -57,7 +57,7 @@ DataInfo.sensorLoc=[-1;5;13;23;35;47;58;71;82;101];
 
 N_caiyang=4;%每个叶道的点数
 resamplePoint=N_caiyang*29; %!!!!!!!!!!!!!!!!重要参数!!!!!!!!!!!!!!!!!!!!!
-RIband=[11:25];    %!!!!!!!!!!!!!!!!重要参数!!!!!!!!!!!!!!!!!!!!!
+RIband=[8:18];    %!!!!!!!!!!!!!!!!重要参数!!!!!!!!!!!!!!!!!!!!!
 sensorLoc=[1:10];
 
 %转速的影响-FFT
@@ -190,7 +190,7 @@ end
 % figure;
 % plot(the_freq{k,i_file},amplitude_freq_diff{k,i_file}(:,2))
 
-
+% load RI-11-25-116.mat
 %% 不同转速的结果对比
 h1=figure('Visible', 'on');
 % set desired output size
@@ -208,9 +208,9 @@ set(h1, 'Position',[25 5 width height],...
 set(gcf, 'color', 'white');
 
 
-jet_color2=colormap(jet(15));
+jet_color2=colormap(jet(18));
 A=[];
-for k=3:15
+for k=3:18
     A(k,:)=UI_FFT_noAverage(k,DataInfo.condition(k,2)-89:DataInfo.condition(k,2)-89+78,2);
     plot(A(k,:),'Color',jet_color2(k,:),'LineWidth',2)
     hold on
@@ -261,7 +261,7 @@ UI_FFT=UI_FFT_noAverage;
 the_freq=the_freq1;
 
 sensorLabel=2;
-for i_rotorspeed=3:15 %固定一个转速
+for i_rotorspeed=16:18 %固定一个转速
     h1=figure('Visible', 'on');
     % set desired output size
     set(h1, 'Units','centimeters')
